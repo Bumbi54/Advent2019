@@ -237,66 +237,30 @@ class IncodeComputer:
         # print(self.instructionList)
         return [int(value) for value in self.outputString.split(",")[1:]]
 
-def tractorBeam(maxX, maxY):
+
+def playGame(instructionList):
     """
-    Find number of point that are affected by Tractor Beam.
-    :param maxX: maximum x coordinate
-    :param maxY: maximum y coordinate
+    Play a game until we find a password.
     :return:
     """
+    incodeProgram = IncodeComputer(instructionList,  [])
+    output = incodeProgram.defaultRunOfProgram()
 
-    coordinateSystem = {}
+    temp = "".join(list((map(chr, output)) ))
+    print(temp)
 
-    for x in range(maxX):
-        for y in range(maxY):
-            incodeProgram = IncodeComputer(instructionList, [x,y] )
-            output = incodeProgram.defaultRunOfProgram()
-            coordinateSystem[(x,y)] = output[0]
-            #print(f"output: {output}")
 
-    with open("output.txt", 'w') as file:
-        for x in range(maxX):
-            for y in range(maxY):
-                file.write(str(coordinateSystem[(x,y)]))
+    while True:
+        command = input("Enter a command to be send to robot:")
+        command +=  "\n"
+        command = ([ord(character) for character in command])
+        incodeProgram.inputValues += command
+        incodeProgram.outputString = ""
+        output = incodeProgram.defaultRunOfProgram()
+        #print(output)
+        temp = "".join(list((map(chr, output[:-1]))))
+        print(temp)
 
-                if y == maxY - 1 :
-                    file.write("\n")
-    print(f"coordinateSystem: {coordinateSystem}")
-    return list(coordinateSystem.values()).count(1)
-
-def tractorBeam2(startX , startY , maxX, maxY):
-    """
-    Find number of point that are affected by Tractor Beam.
-    :param maxX: maximum x coordinate
-    :param maxY: maximum y coordinate
-    :return:
-    """
-
-    coordinateSystem = {}
-
-    for x in range(startX, maxX):
-        for y in range(startY, maxY):
-            incodeProgram = IncodeComputer(instructionList, [x,y] )
-            output = incodeProgram.defaultRunOfProgram()
-            coordinateSystem[(x,y)] = output[0]
-            #print(f"output: {output}")
-
-            if coordinateSystem.get((x - 100, y) == 1) and output[0] == 1:
-                print(f"Hope: {(x,y)}")
-
-            if  coordinateSystem.get((x - 100, y) == 1) and coordinateSystem.get((x, y - 100) == 1) and output[0] == 1:
-                print((x,y))
-                break
-
-    with open("output.txt", 'w') as file:
-        for x in range(startX, maxX):
-            for y in range(startY, maxY):
-                file.write(str(coordinateSystem[(x,y)]))
-
-                if y == maxY - 1 :
-                    file.write("\n")
-
-    return list(coordinateSystem.values()).count(1)
 
 
 if __name__ == "__main__":
@@ -304,11 +268,7 @@ if __name__ == "__main__":
     instructionList = readInput("input.txt")
     print(f"instructionList: {instructionList}")
 
-    #pointsAffected = tractorBeam(50, 50)
-    #print(f"tractorBeam: {pointsAffected}")
+    password = playGame(instructionList)
+    print(f"playGame: {password}")
 
-    #part 2 see from output.txt
-    pointsAffected = tractorBeam2(600, 600, 900, 900)
-    print(f"tractorBeam: {pointsAffected}")
-
-
+    #result items are : "hypercube", "whirled peas", "mouse", "antenna", "semiconducotr"

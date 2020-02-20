@@ -12,6 +12,7 @@ def readInput(fileName):
 
         return list(map(int, file.readline().split(",")))
 
+
 class IncodeComputer:
 
     def __init__(self, instructionList, inputValues):
@@ -110,7 +111,7 @@ class IncodeComputer:
             thirdParameterMode = (self.instructionList[self.index] // 10000) % 10
 
             if curentInstruction == 99:
-                #print("Jej Break")
+                print("Jej Break")
                 self.finishedBool = True
                 break
             elif curentInstruction == 1:
@@ -135,7 +136,7 @@ class IncodeComputer:
                     self.instructionList[thirdRegister] = firstRegister * secondRegister
             elif curentInstruction == 3:
                 incrementStep = 2
-                #print("Give me:")
+                print("Give me:")
                 if len(self.inputValues) == 0:
                     #print("Input values is empty")
                     break
@@ -237,78 +238,192 @@ class IncodeComputer:
         # print(self.instructionList)
         return [int(value) for value in self.outputString.split(",")[1:]]
 
-def tractorBeam(maxX, maxY):
-    """
-    Find number of point that are affected by Tractor Beam.
-    :param maxX: maximum x coordinate
-    :param maxY: maximum y coordinate
+def buildMap(instructionList):
+    '''
+    Run Incode program that will build a map
+    :param instructionList: list of instructions that will be ran
     :return:
-    """
+    '''
 
-    coordinateSystem = {}
+    mapDict = {}
+    i,j = 0, 0
+    maxX = 0
+    maxY = 0
 
-    for x in range(maxX):
-        for y in range(maxY):
-            incodeProgram = IncodeComputer(instructionList, [x,y] )
-            output = incodeProgram.defaultRunOfProgram()
-            coordinateSystem[(x,y)] = output[0]
-            #print(f"output: {output}")
+    incodeProgram = IncodeComputer(instructionList, [] )
+    map = incodeProgram.defaultRunOfProgram()
+    print(f"map:{map}")
+
+    for location in map:
+        locationCoordinates = (i, j)
+        if location == 46:
+            location = "."
+        elif location == 35:
+            location = "#"
+        elif location == 10:
+            location = "\n"
+
+        mapDict[locationCoordinates] = location
+
+        if i > maxY:
+            maxX = i
+
+        if j > maxX:
+            maxY = j
+
+        j += 1
+        if location == "\n":
+            j = 0
+            i += 1
+
+    print(mapDict)
+
+    return mapDict, maxX, maxY
+
+def findCameras(shipMap, maxX, maxY):
+    '''
+    Find cameras in map
+    :param map: map in which we try to find camera
+    :param maxX: maximum X element in map
+    :param maxY: maximum Y element in map
+    :return:
+    '''
+
+    directions = [
+                     (0, 1),
+                     (0, -1),
+                     (1, 0),
+                     (-1, 0),
+                ]
+    cameraList = []
+
+    for location, value in shipMap.items():
+
+        neighborList = []
+        if value == "#":
+            for direction in directions:
+                neighbor = tuple(map(operator.add, direction, location))
+                neighborList.append(shipMap.get(neighbor, 0))
+        if neighborList.count("#") == 4:
+            cameraList.append(location)
+
+    return cameraList
+
+def calculateAlignment(cameraList):
+
+    '''
+    Calulcate alignment  for all of the cameras.
+    :param cameraList: list of camera positions
+    :return:
+    '''
+
+    alignment = 0
+
+    for cameraLocation in cameraList:
+        alignment += cameraLocation[0] * cameraLocation[1]
+
+    return alignment
+
+def printMap(instructionList):
+    '''
+    Print map to a file.
+    :param instructionList:
+    :return:
+    '''
+
+    incodeProgram = IncodeComputer(instructionList, [] )
+    shipMap = incodeProgram.defaultRunOfProgram()
+    print(shipMap)
+    shipMap = ''.join(map(str, shipMap))
+    print(shipMap)
+    shipMap = shipMap.replace("46", ".")
+    shipMap = shipMap.replace("35", "#")
+    shipMap = shipMap.replace("10", "\n")
 
     with open("output.txt", 'w') as file:
-        for x in range(maxX):
-            for y in range(maxY):
-                file.write(str(coordinateSystem[(x,y)]))
+        file.write(shipMap)
 
-                if y == maxY - 1 :
-                    file.write("\n")
-    print(f"coordinateSystem: {coordinateSystem}")
-    return list(coordinateSystem.values()).count(1)
-
-def tractorBeam2(startX , startY , maxX, maxY):
-    """
-    Find number of point that are affected by Tractor Beam.
-    :param maxX: maximum x coordinate
-    :param maxY: maximum y coordinate
+def collectDust(instructionList):
+    '''
+    Find how much dust robot collectes.
+    :param instructionList: list of instructions that will be ran
     :return:
-    """
+    '''
 
-    coordinateSystem = {}
+    #all numbers here were calculated by hand
 
-    for x in range(startX, maxX):
-        for y in range(startY, maxY):
-            incodeProgram = IncodeComputer(instructionList, [x,y] )
-            output = incodeProgram.defaultRunOfProgram()
-            coordinateSystem[(x,y)] = output[0]
-            #print(f"output: {output}")
+    print("--------------------------------------------------------------------------------------------------------")
 
-            if coordinateSystem.get((x - 100, y) == 1) and output[0] == 1:
-                print(f"Hope: {(x,y)}")
+    instructionList[0] = 2
+    incodeProgram = IncodeComputer(instructionList, [] )
+    output = incodeProgram.defaultRunOfProgram()
+    incodeProgram.outputString = ""
+    print(f"output:{output}")
 
-            if  coordinateSystem.get((x - 100, y) == 1) and coordinateSystem.get((x, y - 100) == 1) and output[0] == 1:
-                print((x,y))
-                break
+    inputRoutine = [65,44,65,44,67,44,66,44,67,44,66,44,67,44,66,44,67,44,65,10]
+    #inputRoutine = [65, 10]
 
-    with open("output.txt", 'w') as file:
-        for x in range(startX, maxX):
-            for y in range(startY, maxY):
-                file.write(str(coordinateSystem[(x,y)]))
+    incodeProgram.inputValues = incodeProgram.inputValues + inputRoutine
+    print(f"incodeProgram.inputValues:{incodeProgram.inputValues}")
+    output = incodeProgram.defaultRunOfProgram()
+    print(f"output:{output}")
+    incodeProgram.outputString = ""
+    print(f"incodeProgram.inputValues:{incodeProgram.inputValues}")
 
-                if y == maxY - 1 :
-                    file.write("\n")
+    inputRouteA = [82, 44, 49, 48, 44, 76, 44, 49, 50, 44, 82, 44, 54, 10]
+    #inputRouteA = [82, 49, 48, 44, 10]
+    inputRouteB = [82, 44, 49, 48, 44, 76, 44, 49, 50, 44, 76, 44, 49, 50, 10]
+    inputRouteC = [82, 44, 54, 44, 82, 44, 49, 48, 44, 82, 44, 49, 50, 44, 82, 44, 54, 10]
 
-    return list(coordinateSystem.values()).count(1)
+    print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    incodeProgram.inputValues = incodeProgram.inputValues + inputRouteA
+    print(f"incodeProgram.inputValues:{incodeProgram.inputValues}")
+    output = incodeProgram.defaultRunOfProgram()
+    print(f"output:{output}")
+    incodeProgram.outputString = ""
+    incodeProgram.outputString = ""
+    print(f"incodeProgram.inputValues:{incodeProgram.inputValues}")
 
+    print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+    incodeProgram.inputValues = incodeProgram.inputValues + inputRouteB
+    print(f"incodeProgram.inputValues:{incodeProgram.inputValues}")
+    output = incodeProgram.defaultRunOfProgram()
+    print(f"output:{output}")
+    incodeProgram.outputString = ""
+    print(f"incodeProgram.inputValues:{incodeProgram.inputValues}")
+
+    print("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+    incodeProgram.inputValues = incodeProgram.inputValues + inputRouteC
+    print(f"incodeProgram.inputValues:{incodeProgram.inputValues}")
+    output = incodeProgram.defaultRunOfProgram()
+    print(f"output:{output}")
+    incodeProgram.outputString = ""
+    print(f"incodeProgram.inputValues:{incodeProgram.inputValues}")
+
+    incodeProgram.inputValues = incodeProgram.inputValues + [110, 10]
+    print(f"incodeProgram.inputValues:{incodeProgram.inputValues}")
+    output = incodeProgram.defaultRunOfProgram()
+    print(f"output:{output}")
+    incodeProgram.outputString = ""
+    print(f"incodeProgram.inputValues:{incodeProgram.inputValues}")
 
 if __name__ == "__main__":
 
     instructionList = readInput("input.txt")
     print(f"instructionList: {instructionList}")
 
-    #pointsAffected = tractorBeam(50, 50)
-    #print(f"tractorBeam: {pointsAffected}")
+    #shipMap, maxX, maxY = buildMap(instructionList)
+    #print(f"buildMap: {shipMap}, maxY: {maxX}, maxY:{maxY}")
 
-    #part 2 see from output.txt
-    pointsAffected = tractorBeam2(600, 600, 900, 900)
-    print(f"tractorBeam: {pointsAffected}")
+    #cameraList = findCameras(shipMap, maxX - 1, maxY - 1)
+    #print(f"findCameras: {cameraList}")
+
+    #alignment  = calculateAlignment(cameraList)
+    #print(f"calculateAlignment: {alignment }")
+
+    dust  = collectDust(instructionList)
+    print(f"collectDust: {dust }")
+
+    printMap(instructionList)
 
 

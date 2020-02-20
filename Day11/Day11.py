@@ -1,6 +1,5 @@
-import time
-from collections import deque
-import operator
+import matplotlib.pyplot as plt
+
 
 def readInput(fileName):
     """
@@ -12,6 +11,7 @@ def readInput(fileName):
 
         return list(map(int, file.readline().split(",")))
 
+
 class IncodeComputer:
 
     def __init__(self, instructionList, inputValues):
@@ -21,8 +21,8 @@ class IncodeComputer:
         self.index = 0
         self.relativeBase = 0
         self.outOfMemorySpace = {}
-        self.outputString = ''
 
+    
     def getElementFromMemory(self, address):
         '''
         This function get values from memory or certain address.
@@ -57,7 +57,7 @@ class IncodeComputer:
         if secondParameterMode == 0:
             secondRegister = self.getElementFromMemory(self.getElementFromMemory(self.index + 2))
         elif secondParameterMode == 2:
-            secondRegister = self.getElementFromMemory(self.relativeBase + self.getElementFromMemory(self.index + 2))
+            secondRegister =  self.getElementFromMemory(self.relativeBase + self.getElementFromMemory(self.index + 2))
         else:
             secondRegister = self.getElementFromMemory(self.index + 2)
 
@@ -79,14 +79,14 @@ class IncodeComputer:
         if firstParameterMode == 0:
             firstRegister = self.getElementFromMemory(self.getElementFromMemory(self.index + 1))
         elif firstParameterMode == 2:
-            firstRegister = self.getElementFromMemory(self.relativeBase + self.getElementFromMemory(self.index + 1))
+            firstRegister =  self.getElementFromMemory(self.relativeBase + self.getElementFromMemory(self.index + 1))
         else:
             firstRegister = self.getElementFromMemory(self.index + 1)
 
         if secondParameterMode == 0:
             secondRegister = self.getElementFromMemory(self.getElementFromMemory(self.index + 2))
         elif secondParameterMode == 2:
-            secondRegister = self.getElementFromMemory(self.relativeBase + self.getElementFromMemory(self.index + 2))
+            secondRegister =  self.getElementFromMemory(self.relativeBase + self.getElementFromMemory(self.index + 2))
         else:
             secondRegister = self.getElementFromMemory(self.index + 2)
 
@@ -99,35 +99,31 @@ class IncodeComputer:
         :return:
         '''
 
-
+        outputString = ''
         incrementStep = 4
 
-        while (self.index < len(self.instructionList)):
+        while(self.index < len(self.instructionList)):
 
-            curentInstruction = self.instructionList[self.index] % 100
+            curentInstruction = self.instructionList[self.index]  % 100
             firstParameterMode = (self.instructionList[self.index] // 100) % 10
             secondParameterMode = (self.instructionList[self.index] // 1000) % 10
             thirdParameterMode = (self.instructionList[self.index] // 10000) % 10
 
             if curentInstruction == 99:
-                #print("Jej Break")
+                print("Jej Break")
                 self.finishedBool = True
                 break
             elif curentInstruction == 1:
                 incrementStep = 4
-                firstRegister, secondRegister, thirdRegister = self.threeRegisterInstruction(firstParameterMode,
-                                                                                             secondParameterMode,
-                                                                                             thirdParameterMode)
-                # print(f"thirdRegister: {thirdRegister}, len(self.instructionList):{len(self.instructionList)}")
+                firstRegister, secondRegister, thirdRegister = self.threeRegisterInstruction(firstParameterMode, secondParameterMode, thirdParameterMode)
+                #print(f"thirdRegister: {thirdRegister}, len(self.instructionList):{len(self.instructionList)}")
                 if thirdRegister >= len(self.instructionList):
                     self.outOfMemorySpace[thirdRegister] = firstRegister + secondRegister
                 else:
                     self.instructionList[thirdRegister] = firstRegister + secondRegister
             elif curentInstruction == 2:
                 incrementStep = 4
-                firstRegister, secondRegister, thirdRegister = self.threeRegisterInstruction(firstParameterMode,
-                                                                                             secondParameterMode,
-                                                                                             thirdParameterMode)
+                firstRegister, secondRegister, thirdRegister = self.threeRegisterInstruction(firstParameterMode, secondParameterMode, thirdParameterMode)
 
                 if thirdRegister >= len(self.instructionList):
                     self.outOfMemorySpace[thirdRegister] = firstRegister * secondRegister
@@ -135,55 +131,49 @@ class IncodeComputer:
                     self.instructionList[thirdRegister] = firstRegister * secondRegister
             elif curentInstruction == 3:
                 incrementStep = 2
-                #print("Give me:")
                 if len(self.inputValues) == 0:
                     #print("Input values is empty")
                     break
                 else:
                     if firstParameterMode == 2:
                         if self.relativeBase + self.getElementFromMemory(self.index + 1) > len(self.instructionList):
-                            self.outOfMemorySpace[
-                                self.relativeBase + self.getElementFromMemory(self.index + 1)] = self.inputValues.pop(0)
+                            self.outOfMemorySpace[self.relativeBase + self.getElementFromMemory(self.index + 1)] = self.inputValues .pop()
                         else:
-                            self.instructionList[
-                                self.relativeBase + self.getElementFromMemory(self.index + 1)] = self.inputValues.pop(0)
+                            self.instructionList[self.relativeBase + self.getElementFromMemory(self.index + 1)] = self.inputValues .pop()
                     else:
                         if self.getElementFromMemory(self.index + 1) > len(self.instructionList):
-                            self.outOfMemorySpace[self.getElementFromMemory(self.index + 1)] = self.inputValues.pop(0)
+                            self.outOfMemorySpace[self.getElementFromMemory(self.index + 1)] = self.inputValues .pop()
                         else:
-                            self.instructionList[self.getElementFromMemory(self.index + 1)] = self.inputValues.pop(0)
+                            self.instructionList[self.getElementFromMemory(self.index + 1)] = self.inputValues .pop()
 
             elif curentInstruction == 4:
                 incrementStep = 2
 
                 if firstParameterMode == 0:
-                    self.outputString += "," + str(self.getElementFromMemory(self.getElementFromMemory(self.index + 1)))
+                    outputString += "," + str(self.getElementFromMemory(self.getElementFromMemory(self.index + 1)))
                 elif firstParameterMode == 2:
-                    self.outputString += "," + str(
-                        self.getElementFromMemory(self.relativeBase + self.getElementFromMemory(self.index + 1)))
+                    outputString += "," + str(self.getElementFromMemory(self.relativeBase + self.getElementFromMemory(self.index + 1)))
                 else:
-                    self.outputString += "," + str(self.getElementFromMemory(self.index + 1))
-                #print(f"tempoutputString: {outputString}")
+                    outputString += "," + str(self.getElementFromMemory(self.index + 1))
+                print(f"tempoutputString: {outputString}")
             elif curentInstruction == 5:
                 incrementStep = 3
                 firstRegister, secondRegister = self.twoRegisterInstruction(firstParameterMode, secondParameterMode)
-                # print( f"firstRegister: {firstRegister}, secondRegister:{secondRegister}")
+                #print( f"firstRegister: {firstRegister}, secondRegister:{secondRegister}")
                 if firstRegister != 0:
                     self.index = secondRegister
                     incrementStep = 0
             elif curentInstruction == 6:
                 incrementStep = 3
                 firstRegister, secondRegister = self.twoRegisterInstruction(firstParameterMode, secondParameterMode)
-                # print( f"firstRegister: {firstRegister}, secondRegister:{secondRegister}")
+                #print( f"firstRegister: {firstRegister}, secondRegister:{secondRegister}")
                 if firstRegister == 0:
                     self.index = secondRegister
                     incrementStep = 0
             elif curentInstruction == 7:
                 incrementStep = 4
-                firstRegister, secondRegister, thirdRegister = self.threeRegisterInstruction(firstParameterMode,
-                                                                                             secondParameterMode,
-                                                                                             thirdParameterMode)
-                # print( f"firstRegister: {firstRegister}, secondRegister:{secondRegister}, thirdRegister:{thirdRegister}")
+                firstRegister, secondRegister, thirdRegister = self.threeRegisterInstruction(firstParameterMode, secondParameterMode, thirdParameterMode)
+                #print( f"firstRegister: {firstRegister}, secondRegister:{secondRegister}, thirdRegister:{thirdRegister}")
                 if firstRegister < secondRegister:
                     if thirdRegister > len(self.instructionList):
                         self.outOfMemorySpace[thirdRegister] = 1
@@ -196,10 +186,8 @@ class IncodeComputer:
                         self.instructionList[thirdRegister] = 0
             elif curentInstruction == 8:
                 incrementStep = 4
-                firstRegister, secondRegister, thirdRegister = self.threeRegisterInstruction(firstParameterMode,
-                                                                                             secondParameterMode,
-                                                                                             thirdParameterMode)
-                # print( f"firstRegister: {firstRegister}, secondRegister:{secondRegister}, thirdRegister:{thirdRegister}")
+                firstRegister, secondRegister, thirdRegister = self.threeRegisterInstruction(firstParameterMode, secondParameterMode, thirdParameterMode)
+                #print( f"firstRegister: {firstRegister}, secondRegister:{secondRegister}, thirdRegister:{thirdRegister}")
                 if firstRegister == secondRegister:
                     if thirdRegister > len(self.instructionList):
                         self.outOfMemorySpace[thirdRegister] = 1
@@ -215,14 +203,13 @@ class IncodeComputer:
                 incrementStep = 2
 
                 if firstParameterMode == 0:
-                    self.relativeBase += self.getElementFromMemory(self.getElementFromMemory(self.index + 1, ))
+                    self.relativeBase += self.getElementFromMemory(self.getElementFromMemory(self.index + 1,))
                 elif firstParameterMode == 2:
-                    # self.relativeBase += self.instructionList[self.relativeBase + self.instructionList[self.index + 1]]
-                    # print(self.getElementFromMemory(self.instructionList, self.relativeBase + self.getElementFromMemory(self.instructionList, self.index + 1, self.outOfMemorySpace), self.outOfMemorySpace))
-                    self.relativeBase += self.getElementFromMemory(
-                        self.relativeBase + self.getElementFromMemory(self.index + 1))
+                    #self.relativeBase += self.instructionList[self.relativeBase + self.instructionList[self.index + 1]]
+                    #print(self.getElementFromMemory(self.instructionList, self.relativeBase + self.getElementFromMemory(self.instructionList, self.index + 1, self.outOfMemorySpace), self.outOfMemorySpace))
+                    self.relativeBase += self.getElementFromMemory(self.relativeBase + self.getElementFromMemory(self.index + 1))
 
-                    # self.getElementFromMemory(self.instructionList, self.getElementFromMemory(self.instructionList, self.index + 1, self.outOfMemorySpace), self.outOfMemorySpace)
+                    #self.getElementFromMemory(self.instructionList, self.getElementFromMemory(self.instructionList, self.index + 1, self.outOfMemorySpace), self.outOfMemorySpace)
                 else:
                     self.relativeBase += self.instructionList[self.index + 1]
 
@@ -231,84 +218,117 @@ class IncodeComputer:
                 print("Wrong opcodes instruction")
 
             self.index += incrementStep
-            # print(self.instructionList)
+            #print(self.instructionList)
 
-        # print(f"outputString:{outputString}")
-        # print(self.instructionList)
-        return [int(value) for value in self.outputString.split(",")[1:]]
+        #print(f"outputString:{outputString}")
+        #print(self.instructionList)
+        return [int(value) for value in  outputString.split(",")[1:]]
 
-def tractorBeam(maxX, maxY):
-    """
-    Find number of point that are affected by Tractor Beam.
-    :param maxX: maximum x coordinate
-    :param maxY: maximum y coordinate
+def paintShip(instructionList ):
+    '''
+    Control robot to move in grid and paint the ship. First output from incode program give color to paint. Second parameter gives direction (left, right) for robot to move.
+    Input to incode program is 0 if robot is currentlly over black color and 1 if it over white color.
+    :param instructionList: list of instructions from which we will get out fro the robot
     :return:
-    """
+    '''
 
-    coordinateSystem = {}
+    shipPanels = {(0, 0): 1}
+    curentColor = 0
+    currentPosition = (0, 0)
+    currentDirection = (-1, 0)
 
-    for x in range(maxX):
-        for y in range(maxY):
-            incodeProgram = IncodeComputer(instructionList, [x,y] )
-            output = incodeProgram.defaultRunOfProgram()
-            coordinateSystem[(x,y)] = output[0]
-            #print(f"output: {output}")
+    incodeProgram = IncodeComputer(instructionList, [])
+
+
+    while not incodeProgram.finishedBool:
+
+        if currentPosition not in shipPanels.keys():
+            curentColor = 0
+        else:
+            curentColor = shipPanels[currentPosition]
+
+        #incodeProgram.inputValues.append(curentColor)
+        #programOutput = incodeProgram.defaultRunOfProgram()
+        #print(f"resultInstuctionList: {programOutput}")
+
+        incodeProgram.inputValues.append(curentColor)
+        programOutput = incodeProgram.defaultRunOfProgram()
+        print(f"incodeProgram.defaultRunOfProgram: {programOutput}")
+
+        shipPanels[currentPosition] = programOutput[0]
+
+        if currentDirection == (-1, 0):
+            if programOutput[1] == 1:
+                currentDirection = (0, 1)
+            else:
+                currentDirection = (0, -1)
+
+        elif currentDirection == (1, 0):
+            if programOutput[1] == 1:
+                currentDirection = (0, -1)
+            else:
+                currentDirection = (0, 1)
+
+        elif currentDirection == (0, 1):
+            if programOutput[1] == 1:
+                currentDirection = (1, 0)
+            else:
+                currentDirection = (-1, 0)
+
+        elif currentDirection == (0, -1):
+            if programOutput[1] == 1:
+                currentDirection = (-1, 0)
+            else:
+                currentDirection = (1, 0)
+
+        currentPosition = (currentPosition[0] + currentDirection[0],  currentPosition[1] + currentDirection[1])
+
+
+        print(f"currentPosition: {currentPosition}, currentDirection: {currentDirection}, shipPanels:{shipPanels}")
+
+
+    return shipPanels
+
+def paint(shipPanels):
+    '''
+    Paint ship panels.
+    :param shipPanels: dictinary representing ship panels
+    :return:
+    '''
 
     with open("output.txt", 'w') as file:
-        for x in range(maxX):
-            for y in range(maxY):
-                file.write(str(coordinateSystem[(x,y)]))
 
-                if y == maxY - 1 :
+        previousX = 0
+        for x in range(9):
+            for y in range(50):
+
+                coordinate = (x , y)
+                if coordinate in shipPanels.keys():
+                    value = shipPanels[coordinate]
+                else:
+                    value = "#"
+                if previousX < coordinate[0]:
                     file.write("\n")
-    print(f"coordinateSystem: {coordinateSystem}")
-    return list(coordinateSystem.values()).count(1)
-
-def tractorBeam2(startX , startY , maxX, maxY):
-    """
-    Find number of point that are affected by Tractor Beam.
-    :param maxX: maximum x coordinate
-    :param maxY: maximum y coordinate
-    :return:
-    """
-
-    coordinateSystem = {}
-
-    for x in range(startX, maxX):
-        for y in range(startY, maxY):
-            incodeProgram = IncodeComputer(instructionList, [x,y] )
-            output = incodeProgram.defaultRunOfProgram()
-            coordinateSystem[(x,y)] = output[0]
-            #print(f"output: {output}")
-
-            if coordinateSystem.get((x - 100, y) == 1) and output[0] == 1:
-                print(f"Hope: {(x,y)}")
-
-            if  coordinateSystem.get((x - 100, y) == 1) and coordinateSystem.get((x, y - 100) == 1) and output[0] == 1:
-                print((x,y))
-                break
-
-    with open("output.txt", 'w') as file:
-        for x in range(startX, maxX):
-            for y in range(startY, maxY):
-                file.write(str(coordinateSystem[(x,y)]))
-
-                if y == maxY - 1 :
-                    file.write("\n")
-
-    return list(coordinateSystem.values()).count(1)
-
+                    previousX = coordinate[0]
+                if value == 0:
+                    file.write(" ")
+                elif value == 1:
+                    file.write("1")
+                else:
+                    #file.write(str(shipPanels[coordinate]))
+                    file.write(" ")
+                #file.write(str(coordinate))
 
 if __name__ == "__main__":
 
     instructionList = readInput("input.txt")
-    print(f"instructionList: {instructionList}")
+    print(f"self.instructionList: {instructionList}")
 
-    #pointsAffected = tractorBeam(50, 50)
-    #print(f"tractorBeam: {pointsAffected}")
+    shipPanels = paintShip(instructionList)
+    print(f"paintShip: {len(shipPanels.keys())}")
 
-    #part 2 see from output.txt
-    pointsAffected = tractorBeam2(600, 600, 900, 900)
-    print(f"tractorBeam: {pointsAffected}")
+    paint(shipPanels)
+
+
 
 

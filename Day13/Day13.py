@@ -1,6 +1,4 @@
 import time
-from collections import deque
-import operator
 
 def readInput(fileName):
     """
@@ -11,6 +9,7 @@ def readInput(fileName):
     with open(fileName, 'r') as file:
 
         return list(map(int, file.readline().split(",")))
+
 
 class IncodeComputer:
 
@@ -110,7 +109,7 @@ class IncodeComputer:
             thirdParameterMode = (self.instructionList[self.index] // 10000) % 10
 
             if curentInstruction == 99:
-                #print("Jej Break")
+                print("Jej Break")
                 self.finishedBool = True
                 break
             elif curentInstruction == 1:
@@ -135,7 +134,6 @@ class IncodeComputer:
                     self.instructionList[thirdRegister] = firstRegister * secondRegister
             elif curentInstruction == 3:
                 incrementStep = 2
-                #print("Give me:")
                 if len(self.inputValues) == 0:
                     #print("Input values is empty")
                     break
@@ -143,15 +141,15 @@ class IncodeComputer:
                     if firstParameterMode == 2:
                         if self.relativeBase + self.getElementFromMemory(self.index + 1) > len(self.instructionList):
                             self.outOfMemorySpace[
-                                self.relativeBase + self.getElementFromMemory(self.index + 1)] = self.inputValues.pop(0)
+                                self.relativeBase + self.getElementFromMemory(self.index + 1)] = self.inputValues.pop()
                         else:
                             self.instructionList[
-                                self.relativeBase + self.getElementFromMemory(self.index + 1)] = self.inputValues.pop(0)
+                                self.relativeBase + self.getElementFromMemory(self.index + 1)] = self.inputValues.pop()
                     else:
                         if self.getElementFromMemory(self.index + 1) > len(self.instructionList):
-                            self.outOfMemorySpace[self.getElementFromMemory(self.index + 1)] = self.inputValues.pop(0)
+                            self.outOfMemorySpace[self.getElementFromMemory(self.index + 1)] = self.inputValues.pop()
                         else:
-                            self.instructionList[self.getElementFromMemory(self.index + 1)] = self.inputValues.pop(0)
+                            self.instructionList[self.getElementFromMemory(self.index + 1)] = self.inputValues.pop()
 
             elif curentInstruction == 4:
                 incrementStep = 2
@@ -237,78 +235,83 @@ class IncodeComputer:
         # print(self.instructionList)
         return [int(value) for value in self.outputString.split(",")[1:]]
 
-def tractorBeam(maxX, maxY):
-    """
-    Find number of point that are affected by Tractor Beam.
-    :param maxX: maximum x coordinate
-    :param maxY: maximum y coordinate
+def parseScreen(inscructionList):
+    '''
+    Go through list and parse it into diciantry that will represent screen.
+    :param inscructionList: list of inscructions that will be ran
     :return:
-    """
+    '''
 
-    coordinateSystem = {}
+    incodeProgram = IncodeComputer(inscructionList, [])
 
-    for x in range(maxX):
-        for y in range(maxY):
-            incodeProgram = IncodeComputer(instructionList, [x,y] )
-            output = incodeProgram.defaultRunOfProgram()
-            coordinateSystem[(x,y)] = output[0]
-            #print(f"output: {output}")
+    output = incodeProgram.defaultRunOfProgram()
+    print(output)
 
-    with open("output.txt", 'w') as file:
-        for x in range(maxX):
-            for y in range(maxY):
-                file.write(str(coordinateSystem[(x,y)]))
 
-                if y == maxY - 1 :
-                    file.write("\n")
-    print(f"coordinateSystem: {coordinateSystem}")
-    return list(coordinateSystem.values()).count(1)
+    screenDict = {}
 
-def tractorBeam2(startX , startY , maxX, maxY):
-    """
-    Find number of point that are affected by Tractor Beam.
-    :param maxX: maximum x coordinate
-    :param maxY: maximum y coordinate
+    for index in range(0, len(output), 3):
+
+        screenDict[(output[index], output[index + 1])] = output[index + 2]
+
+    return screenDict
+
+def playGame(inscructionList):
+    '''
+    Play the game
+    :param inscructionList: list of inscructions that will be ran
     :return:
-    """
+    '''
+    print("-----------------------------------------------------------------------------------------------------------------------")
+    inscructionList[0] = 2
 
-    coordinateSystem = {}
+    incodeProgram = IncodeComputer(inscructionList, [])
 
-    for x in range(startX, maxX):
-        for y in range(startY, maxY):
-            incodeProgram = IncodeComputer(instructionList, [x,y] )
-            output = incodeProgram.defaultRunOfProgram()
-            coordinateSystem[(x,y)] = output[0]
-            #print(f"output: {output}")
+    ballPosition = (0, 0)
+    paddlePosition = (0, 0)
 
-            if coordinateSystem.get((x - 100, y) == 1) and output[0] == 1:
-                print(f"Hope: {(x,y)}")
+    while(not incodeProgram.finishedBool):
+        print("-----------------------------------------------------------------------------------------------------------------------")
+        incodeProgram.outputString = ''
+        output = incodeProgram.defaultRunOfProgram()
+        print(f"output:{output}")
 
-            if  coordinateSystem.get((x - 100, y) == 1) and coordinateSystem.get((x, y - 100) == 1) and output[0] == 1:
-                print((x,y))
-                break
+        for index in range(0, len(output), 3):
 
-    with open("output.txt", 'w') as file:
-        for x in range(startX, maxX):
-            for y in range(startY, maxY):
-                file.write(str(coordinateSystem[(x,y)]))
+            screenDict[(output[index], output[index + 1])] = output[index + 2]
 
-                if y == maxY - 1 :
-                    file.write("\n")
+            if output[index + 2] == 4:
+                ballPosition = (output[index], output[index + 1])
 
-    return list(coordinateSystem.values()).count(1)
+            if output[index + 2] == 3:
+                paddlePosition = (output[index], output[index + 1])
 
+
+        print(f"screenDict: {screenDict}")
+        print(f"score: {screenDict[(-1, 0)]}")
+        print(f"ballPosition: {ballPosition}")
+        print(f"paddlePosition: {paddlePosition}")
+
+        if paddlePosition[0] > ballPosition[0]:
+            print("-1, -1")
+            incodeProgram.inputValues.append(-1)
+        elif paddlePosition[0] < ballPosition[0]:
+            print("+1, +1")
+            incodeProgram.inputValues.append(1)
+        else:
+            incodeProgram.inputValues.append(0)
+        #time.sleep(2)
 
 if __name__ == "__main__":
 
-    instructionList = readInput("input.txt")
-    print(f"instructionList: {instructionList}")
+    inscructionList = readInput("input.txt")
+    print(f"inscructionList: {inscructionList}")
 
-    #pointsAffected = tractorBeam(50, 50)
-    #print(f"tractorBeam: {pointsAffected}")
+    screenDict = parseScreen(inscructionList)
+    print(f"screenDict: {screenDict}")
 
-    #part 2 see from output.txt
-    pointsAffected = tractorBeam2(600, 600, 900, 900)
-    print(f"tractorBeam: {pointsAffected}")
+    print(f"Number of block tiles: {list(screenDict.values()).count(2)}")
 
+    output = playGame(inscructionList)
+    print(f"playGame: {output}")
 
